@@ -1,13 +1,9 @@
-import logging
-from aiogram import Bot, Dispatcher, types
-import markups as nav
-from aiogram.filters import Command
-from aiogram.dispatcher.router import Router
-from aiogram.fsm.storage.memory import MemoryStorage
-import asyncio
-from db import Database
 import os
+import logging
+from aiogram import Bot, Dispatcher, executor, types
 from dotenv import load_dotenv
+from db import Database
+import markups as nav
 
 # Загрузка переменных окружения
 load_dotenv()
@@ -16,14 +12,12 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 
 # Инициализация бота и диспетчера
-bot = Bot(os.getenv('TOKEN'))
-dp = Dispatcher(storage=MemoryStorage())
-router = Router()
-dp.include_router(router)
+bot = Bot(token=os.getenv('TOKEN'))
+dp = Dispatcher(bot)
 db = Database('database.db')
 
 # Команда /start
-@router.message(Command('start'))
+@dp.message_handler(commands=['start'])
 async def cmd_start(message: types.Message):
     if message.chat.type == 'private':
         start_command = message.text.strip()
@@ -49,19 +43,18 @@ async def cmd_start(message: types.Message):
             await bot.send_message(message.from_user.id, 'Xush kelibsiz!', reply_markup=nav.mainMenu)
 
 # Обработка сообщения "профиль"
-@router.message()
+@dp.message_handler()
 async def bot_message(message: types.Message):
     if message.text == 'Profil':
         referral_count = db.count_referrals(message.from_user.id)
         await bot.send_message(message.from_user.id, f"ID: {message.from_user.id}\nhttps://t.me/{os.getenv('BOT_NICKNAME')}?start={message.from_user.id}\nTo'plangan ballar soni: {referral_count}")
 
 # Асинхронная функция запуска бота
-async def main():
-    try:
-        await dp.start_polling(bot)
-    except Exception as e:
-        logging.error(f"Ошибка при запуске бота: {e}")
+async def on_startup(dp):
+    logging.info('Starting bot...')
+    await bot.set_webhook()  # Установка вебхука
+    logging.info('Bot started!')
 
 # Запуск бота
 if __name__ == '__main__':
-    asyncio.run(main())
+    executor.start_polling(dp, skip_updates=True)
