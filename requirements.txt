@@ -1,4 +1,3 @@
-python
+
 aiogram
-pydantic
-dotenv
+python-dotenv==1.0.0
