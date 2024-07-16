@@ -1,14 +1,9 @@
-import logging
-from aiogram import Bot, Dispatcher, types
-from aiogram.dispatcher.filters import Command
-from aiogram.dispatcher.router import Router
-from aiogram.contrib.middlewares.logging import LoggingMiddleware
-from aiogram.contrib.middlewares import TrustedUserMiddleware
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from db import Database
 import os
+import logging
+from aiogram import Bot, Dispatcher, executor, types
 from dotenv import load_dotenv
-import asyncio
+from db import Database
+import markups as nav
 
 # Загрузка переменных окружения
 load_dotenv()
@@ -18,16 +13,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Инициализация бота и диспетчера
 bot = Bot(token=os.getenv('TOKEN'))
-dp = Dispatcher(bot, storage=MemoryStorage())
-
-# Добавление мидлварей (по желанию)
-dp.middleware.setup(LoggingMiddleware())
-dp.middleware.setup(TrustedUserMiddleware())
-
-# Инициализация роутера
-router = Router(dp)
-
-# Инициализация базы данных
+dp = Dispatcher(bot)
 db = Database('database.db')
 
 # Команда /start
@@ -65,14 +51,10 @@ async def bot_message(message: types.Message):
 
 # Асинхронная функция запуска бота
 async def on_startup(dp):
-    await dp.bot.set_webhook()  # Включение webhook (при необходимости)
-    logging.info("Starting connection")
-    await dp.start_polling()
+    logging.info('Starting bot...')
+    await bot.set_webhook()  # Установка вебхука
+    logging.info('Bot started!')
 
 # Запуск бота
 if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    loop.create_task(on_startup(dp))
-    executor = ThreadPoolExecutor()
-    loop.set_default_executor(executor)
-    executor.submit(loop.run_forever)
+    executor.start_polling(dp, skip_updates=True)
