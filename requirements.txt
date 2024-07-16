@@ -1,4 +1,4 @@
-python
+
 aiogram
 python-dotenv
 pydantic
