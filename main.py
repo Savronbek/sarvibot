@@ -1,18 +1,22 @@
 import logging
 from aiogram import Bot, Dispatcher, types
-from config import TOKEN, BOT_NICKNAME
 import markups as nav
 from aiogram.filters import Command
 from aiogram.dispatcher.router import Router
 from aiogram.fsm.storage.memory import MemoryStorage
 import asyncio
 from db import Database
+import os
+from dotenv import load_dotenv
+
+# Загрузка переменных окружения
+load_dotenv()
 
 # Установка уровня логирования
 logging.basicConfig(level=logging.INFO)
 
 # Инициализация бота и диспетчера
-bot = Bot(token=TOKEN)
+bot = Bot(os.getenv('TOKEN'))
 dp = Dispatcher(storage=MemoryStorage())
 router = Router()
 dp.include_router(router)
@@ -49,7 +53,7 @@ async def cmd_start(message: types.Message):
 async def bot_message(message: types.Message):
     if message.text == 'Profil':
         referral_count = db.count_referrals(message.from_user.id)
-        await bot.send_message(message.from_user.id, f"ID: {message.from_user.id}\nhttps://t.me/{BOT_NICKNAME}?start={message.from_user.id}\nTo'plangan ballar soni: {referral_count}")
+        await bot.send_message(message.from_user.id, f"ID: {message.from_user.id}\nhttps://t.me/{os.getenv('BOT_NICKNAME')}?start={message.from_user.id}\nTo'plangan ballar soni: {referral_count}")
 
 # Асинхронная функция запуска бота
 async def main():
